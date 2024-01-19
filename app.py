@@ -141,15 +141,32 @@ class Ball:
         #         self.x_speed = 0
 
         # paddle bounce
+        collision = False
         if not pog.toggle:
-            collisions = []
             for paddle in paddles:
                 if self.rect.colliderect(paddle.rect):
-                    if paddle.rect.right >= self.rect.left:
-                        self.x_pos += 2
-                    else:
-                        self.x_pos -= 2
-                    self.x_speed *= -1 * self.retention
+                    collision = True
+                    # if paddle.rect.right >= self.rect.left:
+                    #     self.x_pos += 1
+                    # else:
+                    #     self.x_pos -= 1
+                    # self.x_speed *= -1 * self.retention
+                    if (
+                            self.rect.right >= paddle.rect.left
+                            and self.old_rect.right <= paddle.old_rect.left
+                        ):
+                            self.rect.right = paddle.rect.left
+                            self.x_pos = self.rect.centerx
+                            self.x_speed *= -1
+
+                        # collision on the left
+                    if (
+                        self.rect.left <= paddle.rect.right
+                        and self.old_rect.left >= paddle.old_rect.right
+                    ):
+                        self.rect.left = paddle.rect.right
+                        self.x_pos = self.rect.centerx
+                        self.x_speed *= -1
                     
                 
 
@@ -159,6 +176,8 @@ class Ball:
             #         self.x_speed -= self.friction
             #     elif self.x_speed < 0:
             #         self.x_speed += self.friction
+                        
+        return collision
     
 
 
@@ -185,6 +204,7 @@ paddle_height = 75
 player = Paddle(paddle_height / 4, SCREEN_WIDTH / 2 - paddle_height / 2, 15, paddle_height, 'white')
 enemy = Paddle(SCREEN_WIDTH - paddle_height / 2, SCREEN_HEIGHT / 2 - paddle_height / 2, 15, paddle_height, 'white')
 fps_counter = ui.FPS()
+particles = []
 pog.set_circle(2000)
 # main game loop
 run = True
@@ -207,7 +227,8 @@ while run:
     
     ball.draw()
     ball.check_pog(pog)
-    ball.check_forces([player, enemy])
+    if ball.check_forces([player, enemy]):
+
     ball.update_pos(dt)
     pog.circle()
     
