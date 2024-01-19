@@ -1,7 +1,8 @@
-import pygame, time, math
-import ui as ui
+import pygame, time, math, random
+import visuals as visuals
 
 pygame.init()
+pygame.display.set_caption('Pung')
 
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 800
@@ -141,11 +142,11 @@ class Ball:
         #         self.x_speed = 0
 
         # paddle bounce
-        collision = False
+        collision = [False, False]
         if not pog.toggle:
             for paddle in paddles:
                 if self.rect.colliderect(paddle.rect):
-                    collision = True
+                    collision[0] = True
                     # if paddle.rect.right >= self.rect.left:
                     #     self.x_pos += 1
                     # else:
@@ -158,6 +159,7 @@ class Ball:
                             self.rect.right = paddle.rect.left
                             self.x_pos = self.rect.centerx
                             self.x_speed *= -1
+                            collision[1] = True
 
                         # collision on the left
                     if (
@@ -203,8 +205,9 @@ pog = POG(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 5, True)
 paddle_height = 75
 player = Paddle(paddle_height / 4, SCREEN_WIDTH / 2 - paddle_height / 2, 15, paddle_height, 'white')
 enemy = Paddle(SCREEN_WIDTH - paddle_height / 2, SCREEN_HEIGHT / 2 - paddle_height / 2, 15, paddle_height, 'white')
-fps_counter = ui.FPS()
+fps_counter = visuals.FPS()
 particles = []
+sparks = []
 pog.set_circle(2000)
 # main game loop
 run = True
@@ -227,10 +230,32 @@ while run:
     
     ball.draw()
     ball.check_pog(pog)
-    if ball.check_forces([player, enemy]):
-
+    collision = ball.check_forces([player, enemy])
+    if collision[0]:
+        if collision[1]:
+            for i in range(15):
+                particles.append(visuals.Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
+                pass
+            for i in range(30):
+                sparks.append(visuals.Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(90, 270)), random.randint(2, 9), (255, 255, 255), 2))
+        else:
+            for i in range(15):
+                particles.append(visuals.Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
+                pass
+            for i in range(30):
+                sparks.append(visuals.Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(-90, 90)), random.randint(2, 9), (255, 255, 255), 2))
     ball.update_pos(dt)
     pog.circle()
+    for particle in particles:
+        particle.update()
+        if particle.radius == 0:
+            particles.remove(particle)
+
+    for i, spark in sorted(enumerate(sparks), reverse=True):
+        spark.move(1)
+        spark.draw(screen)
+        if not spark.alive:
+            sparks.pop(i)
     
     fps_counter.render(dt, screen)
     for event in pygame.event.get():

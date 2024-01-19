@@ -1,56 +1,81 @@
-import pygame
+import pygame, math
 
 
-class Particle(object):
+def circle_surf(radius, color):
+    surf = pygame.Surface((radius * 2, radius * 2))
+    pygame.draw.circle(surf, color, (radius, radius), radius)
+    surf.set_colorkey((0, 0, 0))
+    return surf
 
-    def __init__(self, x, y, particle_type, motion, decay_rate, start_frame, custom_color=None, physics=False):
-        self.x = x
-        self.y = y
-        self.type = particle_type
-        self.motion = motion
-        self.decay_rate = decay_rate
-        self.color = custom_color
-        self.frame = start_frame
-        self.physics = physics
-        self.orig_motion = self.motion
-        self.temp_motion = [0, 0]
-        self.time_left = len(particle_images[self.type]) + 1 - self.frame
-        self.render = True
-        self.random_constant = random.randint(20, 30) / 30
+class Particle:
+    def __init__(self, x_pos, y_pos, x_vel, y_vel, radius, screen):
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+        self.radius = radius
+        self.screen = screen
 
-    def draw(self, surface, scroll):
-        global particle_images
-        if self.render:
-            #if self.frame > len(particle_images[self.type]):
-            #    self.frame = len(particle_images[self.type])
-            if self.color == None:
-                blit_center(surface,particle_images[self.type][int(self.frame)],(self.x-scroll[0],self.y-scroll[1]))
-            else:
-                blit_center(surface,swap_color(particle_images[self.type][int(self.frame)],(255,255,255),self.color),(self.x-scroll[0],self.y-scroll[1]))
+    def update(self):
+        self.x_pos += self.x_vel
+        self.y_pos += self.y_vel
+        self.radius -= 0.1
+        self.y_vel += 0.1
+        self.circle = pygame.draw.circle(self.screen, 'white', (int(self.x_pos), int(self.y_pos)), int(self.radius))
+        radius = self.radius * 2
+        self.screen.blit(circle_surf(radius, (20, 20, 60)), (int(self.x_pos - radius), int(self.y_pos - radius)), special_flags=BLEND_RGB_ADD)
 
-    def update(self, dt):
-        self.frame += self.decay_rate * dt
-        self.time_left = len(particle_images[self.type]) + 1 - self.frame
-        running = True
-        self.render = True
-        if self.frame >= len(particle_images[self.type]):
-            self.render = False
-            if self.frame >= len(particle_images[self.type]) + 1:
-                running = False
-            running = False
-        if not self.physics:
-            self.x += (self.temp_motion[0] + self.motion[0]) * dt
-            self.y += (self.temp_motion[1] + self.motion[1]) * dt
-            if self.type == 'p2':
-                self.motion[1] += dt * 140
-        self.temp_motion = [0, 0]
-        return running
-    
-def blit_center(target_surf, surf, loc):
-    target_surf.blit(surf, (loc[0] - surf.get_width() // 2, loc[1] - surf.get_height() // 2))
+class Spark():
+    def __init__(self, loc, angle, speed, color, scale=1):
+        self.loc = loc
+        self.angle = angle
+        self.speed = speed
+        self.scale = scale
+        self.color = color
+        self.alive = True
 
-def blit_center_add(target_surf, surf, loc):
-    target_surf.blit(surf, (loc[0] - surf.get_width() // 2, loc[1] - surf.get_height() // 2), special_flags=pygame.BLEND_RGBA_ADD)
+    def point_towards(self, angle, rate):
+        rotate_direction = ((angle - self.angle + math.pi * 3) % (math.pi * 2)) - math.pi
+        try:
+            rotate_sign = abs(rotate_direction) / rotate_direction
+        except ZeroDivisionError:
+            rotate_sing = 1
+        if abs(rotate_direction) < rate:
+            self.angle = angle
+        else:
+            self.angle += rate * rotate_sign
+
+    def calculate_movement(self, dt):
+        return [math.cos(self.angle) * self.speed * dt, math.sin(self.angle) * self.speed * dt]
+
+
+    # gravity and friction
+    def velocity_adjust(self, friction, force, terminal_velocity, dt):
+        movement = self.calculate_movement(dt)
+        movement[1] = min(terminal_velocity, movement[1] + force * dt)
+        movement[0] *= friction
+        self.angle = math.atan2(movement[1], movement[0])
+        # if you want to get more realistic, the speed should be adjusted here
+
+    def move(self, dt):
+        movement = self.calculate_movement(dt)
+        self.loc[0] += movement[0]
+        self.loc[1] += movement[1]
+
+        self.speed -= 0.2
+
+        if self.speed <= 0:
+            self.alive = False
+
+    def draw(self, surf):
+        if self.alive:
+            points = [
+                [self.loc[0] + math.cos(self.angle) * self.speed * self.scale, self.loc[1] + math.sin(self.angle) * self.speed * self.scale],
+                [self.loc[0] + math.cos(self.angle + math.pi / 2) * self.speed * self.scale * 0.3, self.loc[1] + math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+                [self.loc[0] - math.cos(self.angle) * self.speed * self.scale * 3.5, self.loc[1] - math.sin(self.angle) * self.speed * self.scale * 3.5],
+                [self.loc[0] + math.cos(self.angle - math.pi / 2) * self.speed * self.scale * 0.3, self.loc[1] - math.sin(self.angle + math.pi / 2) * self.speed * self.scale * 0.3],
+                ]
+            pygame.draw.polygon(surf, self.color, points)
 
 class FPS:
     def __init__(self):
