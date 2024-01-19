@@ -22,8 +22,9 @@ class Particle:
         self.radius -= 0.1
         self.y_vel += 0.1
         self.circle = pygame.draw.circle(self.screen, 'white', (int(self.x_pos), int(self.y_pos)), int(self.radius))
-        radius = self.radius * 2
-        self.screen.blit(circle_surf(radius, (20, 20, 60)), (int(self.x_pos - radius), int(self.y_pos - radius)), special_flags=BLEND_RGB_ADD)
+        if self.radius > 0:
+            radius = self.radius * 2
+            self.screen.blit(circle_surf(radius, (20, 20, 20)), (int(self.x_pos - radius), int(self.y_pos - radius)), special_flags=pygame.BLEND_RGB_ADD)
 
 class Spark():
     def __init__(self, loc, angle, speed, color, scale=1):

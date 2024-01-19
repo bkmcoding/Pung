@@ -1,8 +1,5 @@
-#!/usr/bin/python3.4
-# Setup Python ----------------------------------------------- #
 import pygame, sys, random
 
-# Setup pygame/window ---------------------------------------- #
 mainClock = pygame.time.Clock()
 from pygame.locals import *
 pygame.init()
@@ -15,13 +12,10 @@ def circle_surf(radius, color):
     surf.set_colorkey((0, 0, 0))
     return surf
 
-# [loc, velocity, timer]
 particles = []
 
-# Loop ------------------------------------------------------- #
 while True:
 
-    # Background --------------------------------------------- #
     screen.fill((0,0,0))
 
     pygame.draw.rect(screen, (50, 20, 120), pygame.Rect(100, 100, 200, 80))
@@ -42,7 +36,6 @@ while True:
         if particle[2] <= 0:
             particles.remove(particle)
 
-    # Buttons ------------------------------------------------ #
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -52,6 +45,5 @@ while True:
                 pygame.quit()
                 sys.exit()
 
-    # Update ------------------------------------------------- #
     pygame.display.update()
     mainClock.tick(60)

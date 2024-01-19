@@ -1,5 +1,5 @@
 import pygame, time, math, random
-import visuals as visuals
+from visuals import *
 
 pygame.init()
 pygame.display.set_caption('Pung')
@@ -7,14 +7,17 @@ pygame.display.set_caption('Pung')
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 800
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-
-fps = 60
 clock = pygame.time.Clock()
 
 # game variables
+fps = 60
+paddle_height = 75
 wall_thickness = 10
 gravity = 0.5
 bounce_stop = 0.3
+enemy_score = 0
+player_score = 0
+game_status = 0
 
 class Game:
     def __init__(self):
@@ -34,15 +37,13 @@ class POG:
         self.current_rotation = 0
         # self.velocity = pygame.math.Vector2()
 
-    def update(self, x_pos, y_pos):
+    def update(self):
+        if not game_status:
+            self.toggle = True
+
+    def change_pos(self, x_pos, y_pos):
         self.x_pos = x_pos
         self.y_pos = y_pos
-
-    def enable(self):
-        self.toggle = True
-
-    def disable(self):
-        self.toggle = False
 
     def set_default(self):
         self.x_pos = SCREEN_WIDTH / 2
@@ -57,8 +58,11 @@ class POG:
             self.y_pos = SCREEN_HEIGHT / 2 + 50 * math.sin(math.radians(self.angle))
             self.angle += self.speed
             self.rotate_amount -= self.angle
+            return 0
         else:
             self.toggle = False
+            self.set_default()
+            return 1
 
 
 # Paddles that can be used to knock the ball around
@@ -99,10 +103,10 @@ class Ball:
         self.friction = friction
         self.speed = 100
         self.pog_toggle = False
+        self.round_over = [0,0]
 
     def draw(self):
         self.circle = pygame.draw.circle(screen, self.color, (round(self.x_pos), round(self.y_pos)), self.radius)
-        # self.rect = pygame.draw.rect(screen, 'red', self.rect)
 
     def check_pog(self, pog):
         if pog.toggle:
@@ -124,6 +128,8 @@ class Ball:
             self.pog_toggle = False
 
     def check_forces(self, paddles):
+
+        # gravity
         if not pog.toggle:
             if self.y_pos < SCREEN_HEIGHT - self.radius - (wall_thickness / 2):
                 self.y_speed += gravity
@@ -135,11 +141,10 @@ class Ball:
                         self.y_speed = 0
 
         # wall bounce
-        # if (self.x_pos < self.radius + (wall_thickness/2) and self.x_speed < 0) or \
-        #         (self.x_pos > SCREEN_WIDTH - self.radius - (wall_thickness/2) and self.x_speed > 0):
-        #     self.x_speed *= -1 * self.retention
-        #     if abs(self.x_speed) < bounce_stop:
-        #         self.x_speed = 0
+        if (self.x_pos < self.radius + (wall_thickness/2) and self.x_speed < 0):
+            self.round_over[0] = 1
+        if (self.x_pos > SCREEN_WIDTH - self.radius - (wall_thickness/2) and self.x_speed > 0):
+            self.round_over[1] = 1
 
         # paddle bounce
         collision = [False, False]
@@ -147,11 +152,6 @@ class Ball:
             for paddle in paddles:
                 if self.rect.colliderect(paddle.rect):
                     collision[0] = True
-                    # if paddle.rect.right >= self.rect.left:
-                    #     self.x_pos += 1
-                    # else:
-                    #     self.x_pos -= 1
-                    # self.x_speed *= -1 * self.retention
                     if (
                             self.rect.right >= paddle.rect.left
                             and self.old_rect.right <= paddle.old_rect.left
@@ -202,10 +202,9 @@ def draw_walls():
 
 ball = Ball(SCREEN_WIDTH / 2 - 15, 50, 30, 'white', 100, .75, 0, 0, 1, 0.02)
 pog = POG(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 5, True)
-paddle_height = 75
 player = Paddle(paddle_height / 4, SCREEN_WIDTH / 2 - paddle_height / 2, 15, paddle_height, 'white')
 enemy = Paddle(SCREEN_WIDTH - paddle_height / 2, SCREEN_HEIGHT / 2 - paddle_height / 2, 15, paddle_height, 'white')
-fps_counter = visuals.FPS()
+fps_counter = FPS()
 particles = []
 sparks = []
 pog.set_circle(2000)
@@ -224,28 +223,35 @@ while run:
     enemy.update_pos(ball.y_pos - enemy.height / 2)
     player.draw()
     enemy.draw()
-    # mouse_pos = pygame.mouse.get_pos()
-    # pog.update(mouse_pos[0], mouse_pos[1])
-
-    
     ball.draw()
     ball.check_pog(pog)
     collision = ball.check_forces([player, enemy])
+    ball.update_pos(dt)
+    if ball.round_over[0] == 1:
+        enemy_score += 1
+        game_status = 0
+    if ball.round_over[1] == 1:
+        player_score += 1
+        game_status = 0
+    print(ball.round_over)
+    pog.update()
+
     if collision[0]:
         if collision[1]:
             for i in range(15):
-                particles.append(visuals.Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
+                particles.append(Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
                 pass
             for i in range(30):
-                sparks.append(visuals.Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(90, 270)), random.randint(2, 9), (255, 255, 255), 2))
+                sparks.append(Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(90, 270)), random.randint(2, 9), (255, 255, 255), 2))
         else:
             for i in range(15):
-                particles.append(visuals.Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
+                particles.append(Particle(ball.x_pos, ball.y_pos + ball.radius, random.randint(0, 40) / 10 - 1, random.randint(-50, 10) / 10 - 1, random.randint(4, 6), screen))
                 pass
             for i in range(30):
-                sparks.append(visuals.Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(-90, 90)), random.randint(2, 9), (255, 255, 255), 2))
-    ball.update_pos(dt)
-    pog.circle()
+                sparks.append(Spark([ball.x_pos, ball.y_pos + ball.radius], math.radians(random.randint(-90, 90)), random.randint(2, 9), (255, 255, 255), 2))
+    
+    if game_status == 0:
+        game_status = pog.circle()
     for particle in particles:
         particle.update()
         if particle.radius == 0:
