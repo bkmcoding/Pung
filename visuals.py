@@ -8,19 +8,21 @@ def circle_surf(radius, color):
     return surf
 
 class Particle:
-    def __init__(self, x_pos, y_pos, x_vel, y_vel, radius, screen):
+    def __init__(self, x_pos, y_pos, x_vel, y_vel, radius, decay_rate, gravity, screen):
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.x_vel = x_vel
         self.y_vel = y_vel
         self.radius = radius
+        self.decay_rate = decay_rate
+        self.gravity = gravity
         self.screen = screen
 
     def update(self):
         self.x_pos += self.x_vel
         self.y_pos += self.y_vel
-        self.radius -= 0.1
-        self.y_vel += 0.1
+        self.radius -= self.decay_rate
+        self.y_vel += self.gravity
         self.circle = pygame.draw.circle(self.screen, 'white', (int(self.x_pos), int(self.y_pos)), int(self.radius))
         if self.radius > 0:
             radius = self.radius * 2

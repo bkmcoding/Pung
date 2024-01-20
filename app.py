@@ -19,6 +19,37 @@ enemy_score = 0
 player_score = 0
 game_status = 0
 
+class Button:
+    def __init__(self, x, y, width, height, image):
+        self.x = x
+        self.y = y
+        self.image = pygame.image.load(f'assets/{image}.png').convert_alpha()
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (self.x, self.y)
+        self.clicked = False
+
+    def check_hover(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos):
+            self.hover = True
+        else:
+            self.hover = False
+
+    def check_click(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+        else:
+            self.clicked = False
+    
+    def update(self, mouse_pos):
+        self.check_hover(mouse_pos)
+        self.check_click(mouse_pos)
+        if self.hover:
+            pass
+        if self.clicked:
+            return True
+        else: False
 
 class Menu:
     def __init__(self):
@@ -30,30 +61,33 @@ class Menu:
         self.load_assets()
 
     def load_assets(self):
-        self.logo = pygame.image.load("assets/PungLogo.png").convert_alpha()
+        self.logo = pygame.image.load("assets/PungLogotest1.png").convert_alpha()
         self.logo = pygame.transform.scale(self.logo, (384, 256))
         self.logo_pos = (SCREEN_WIDTH // 2 - self.logo.get_width() // 2, SCREEN_HEIGHT // 4 - self.logo.get_height() // 2)
+        self.start_button = Button(SCREEN_WIDTH // 2 - 384 / 2, SCREEN_HEIGHT // 2, 384, 256, "start_button")
 
     def star_effect(self):
-        for i in range(120):
-            self.particles.append(
-                    Particle(
-                        ball.x_pos,
-                        ball.y_pos + ball.radius * 2,
-                        random.randint(0, 40) / 10 - 1,
-                        random.randint(-50, 10) / 10 - 1,
-                        random.randint(4, 6),
-                        self.menu,
-                    )
+        self.particles.append(
+                Particle(
+                    random.randint(0,SCREEN_WIDTH * 2),
+                    0,
+                    -0.1,
+                    random.randint(11, 18) / 10 - 1,
+                    random.randint(4, 6),
+                    0.005,
+                    0,
+                    self.menu,
                 )
+            )
 
 
     def check_status(self):
         self.menu.fill((0, 0, 0))
-        for particle in particles:
+        self.star_effect()
+        for particle in self.particles:
             particle.update()
-            if particle.radius == 0:
-                particles.remove(particle)
+            if particle.radius <= 0:
+                self.particles.remove(particle)
         if self.status == "Main":
             self.main_menu()
         elif self.status == "Settings":
@@ -65,7 +99,10 @@ class Menu:
             sys.exit()
     
     def main_menu(self):
+        mouse_pos = pygame.mouse.get_pos()
         self.menu.blit(self.logo, self.logo_pos)
+        self.menu.blit(self.start_button.image, self.start_button.rect)
+        self.start_button.update(mouse_pos)
 
 
 # POG (point of gravity)
@@ -292,6 +329,8 @@ def game_loop():
                         random.randint(0, 40) / 10 - 1,
                         random.randint(-50, 10) / 10 - 1,
                         random.randint(4, 6),
+                        0.1,
+                        0.1,
                         screen,
                     )
                 )
@@ -315,6 +354,8 @@ def game_loop():
                         random.randint(0, 40) / 10 - 1,
                         random.randint(-50, 10) / 10 - 1,
                         random.randint(4, 6),
+                        0.1,
+                        0.1,
                         screen,
                     )
                 )
@@ -334,7 +375,7 @@ def game_loop():
         game_status = pog.circle()
     for particle in particles:
         particle.update()
-        if particle.radius == 0:
+        if particle.radius <= 0:
             particles.remove(particle)
 
     for i, spark in sorted(enumerate(sparks), reverse=True):
