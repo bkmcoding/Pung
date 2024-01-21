@@ -23,8 +23,11 @@ class Button:
     def __init__(self, x, y, width, height, image):
         self.x = x
         self.y = y
-        self.image = pygame.image.load(f'assets/{image}.png').convert_alpha()
+        self.image = pygame.image.load(f'assets/{image}1.png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (width, height))
+        self.click_image = pygame.image.load(f'assets/{image}2.png').convert_alpha()
+        self.click_image = pygame.transform.scale(self.image, (width, height))
+        self.blit_image = self.image
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
         self.clicked = False
@@ -39,8 +42,10 @@ class Button:
         if self.rect.collidepoint(mouse_pos):
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 self.clicked = True
+                self.blit_image = self.click_image
         else:
             self.clicked = False
+            self.blit_image = self.image
     
     def update(self, mouse_pos):
         self.check_hover(mouse_pos)
@@ -61,10 +66,10 @@ class Menu:
         self.load_assets()
 
     def load_assets(self):
-        self.logo = pygame.image.load("assets/PungLogotest1.png").convert_alpha()
+        self.logo = pygame.image.load("assets/PungLogo_lowres.png").convert_alpha()
         self.logo = pygame.transform.scale(self.logo, (384, 256))
         self.logo_pos = (SCREEN_WIDTH // 2 - self.logo.get_width() // 2, SCREEN_HEIGHT // 4 - self.logo.get_height() // 2)
-        self.start_button = Button(SCREEN_WIDTH // 2 - 384 / 2, SCREEN_HEIGHT // 2, 384, 256, "start_button")
+        self.start_button = Button(SCREEN_WIDTH // 2 - 384 / 2, SCREEN_HEIGHT // 2, 384, 256, "start_button_rev")
 
     def star_effect(self):
         self.particles.append(
@@ -102,7 +107,8 @@ class Menu:
         mouse_pos = pygame.mouse.get_pos()
         self.menu.blit(self.logo, self.logo_pos)
         self.menu.blit(self.start_button.image, self.start_button.rect)
-        self.start_button.update(mouse_pos)
+        if self.start_button.update(mouse_pos):
+            self.menu_enabled = False
 
 
 # POG (point of gravity)
@@ -153,17 +159,20 @@ class Paddle:
         self.y_pos = y_pos
         self.width = width
         self.height = height
+        self.image = pygame.image.load(f'assets/paddle.png').convert_alpha()
+        # self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(topleft=(self.x_pos, self.y_pos))
         self.color = color
-        self.rect = pygame.Rect(x_pos, y_pos, width, height)
         self.old_rect = self.rect.copy()
 
     def draw(self):
-        self.rect = pygame.draw.rect(screen, self.color, self.rect)
+        # self.rect = pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(self.image, self.rect)
 
     def update_pos(self, y_pos):
         self.old_rect = self.rect.copy()
         if y_pos - self.height / 4 >= 0:
-            if y_pos + self.height * 1.25 <= SCREEN_HEIGHT:  
+            if y_pos + self.width * 1.25 <= SCREEN_HEIGHT:  
                 self.rect.y = y_pos
 
 # The main ball that is used to score against the enemy
@@ -172,7 +181,9 @@ class Ball:
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.radius = radius
-        self.rect = pygame.Rect(x_pos - radius, y_pos - radius + 1, radius * 2 + 1, radius * 2)
+        self.image = pygame.image.load(f'assets/ball.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(self.x_pos, self.y_pos))
+        # self.rect = pygame.Rect(x_pos - radius, y_pos - radius + 1, radius * 2 + 1, radius * 2)
         self.old_rect = self.rect.copy()
         self.color = color
         self.mass = mass
@@ -187,7 +198,8 @@ class Ball:
         self.round_over = [0,0]
 
     def draw(self):
-        self.circle = pygame.draw.circle(screen, self.color, (round(self.x_pos), round(self.y_pos)), self.radius)
+        # self.circle = pygame.draw.circle(screen, self.color, (round(self.x_pos), round(self.y_pos)), self.radius)
+        screen.blit(self.image, self.rect)
 
     def check_pog(self, pog):
         if pog.toggle:
@@ -294,97 +306,7 @@ previous_time = time.time()
 run = True
 
 
-def game_loop():
-    dt = time.time() - previous_time
-    previous_time = time.time()
-    clock.tick(fps)
-    fps_counter.get_time()
-    screen.fill("black")
-    walls = draw_walls()
-    mouse_coords = pygame.mouse.get_pos()
-    player.update_pos(mouse_coords[1] - player.height / 2)
-    enemy.update_pos(ball.y_pos - enemy.height / 2)
-    player.draw()
-    enemy.draw()
-    ball.draw()
-    ball.check_pog(pog)
-    collision = ball.check_forces([player, enemy])
-    ball.update_pos(dt)
-    if ball.round_over[0] == 1:
-        enemy_score += 1
-        game_status = 0
-    if ball.round_over[1] == 1:
-        player_score += 1
-        game_status = 0
-    print(ball.round_over)
-    pog.update()
-
-    if collision[0]:
-        if collision[1]:
-            for i in range(15):
-                particles.append(
-                    Particle(
-                        ball.x_pos,
-                        ball.y_pos + ball.radius * 2,
-                        random.randint(0, 40) / 10 - 1,
-                        random.randint(-50, 10) / 10 - 1,
-                        random.randint(4, 6),
-                        0.1,
-                        0.1,
-                        screen,
-                    )
-                )
-                pass
-            for i in range(30):
-                sparks.append(
-                    Spark(
-                        [ball.x_pos, ball.y_pos + ball.radius * 2],
-                        math.radians(random.randint(90, 270)),
-                        random.randint(2, 9),
-                        (255, 255, 255),
-                        2,
-                    )
-                )
-        else:
-            for i in range(15):
-                particles.append(
-                    Particle(
-                        ball.x_pos,
-                        ball.y_pos + ball.radius * 2,
-                        random.randint(0, 40) / 10 - 1,
-                        random.randint(-50, 10) / 10 - 1,
-                        random.randint(4, 6),
-                        0.1,
-                        0.1,
-                        screen,
-                    )
-                )
-                pass
-            for i in range(30):
-                sparks.append(
-                    Spark(
-                        [ball.x_pos, ball.y_pos + ball.radius * 2],
-                        math.radians(random.randint(-90, 90)),
-                        random.randint(2, 9),
-                        (255, 255, 255),
-                        2,
-                    )
-                )
-
-    if game_status == 0:
-        game_status = pog.circle()
-    for particle in particles:
-        particle.update()
-        if particle.radius <= 0:
-            particles.remove(particle)
-
-    for i, spark in sorted(enumerate(sparks), reverse=True):
-        spark.move(1)
-        spark.draw(screen)
-        if not spark.alive:
-            sparks.pop(i)
-
-    fps_counter.render(dt, screen)
+    
 
 
 while run:
@@ -392,7 +314,96 @@ while run:
         menu.check_status()
         screen.blit(menu.menu, (0, 0))
     else:
-        game_loop()
+        dt = time.time() - previous_time
+        previous_time = time.time()
+        clock.tick(fps)
+        fps_counter.get_time()
+        screen.fill("black")
+        walls = draw_walls()
+        mouse_coords = pygame.mouse.get_pos()
+        player.update_pos(mouse_coords[1] - player.height / 2)
+        enemy.update_pos(ball.y_pos - enemy.height / 2)
+        player.draw()
+        enemy.draw()
+        ball.draw()
+        ball.check_pog(pog)
+        collision = ball.check_forces([player, enemy])
+        ball.update_pos(dt)
+        if ball.round_over[0] == 1:
+            enemy_score += 1
+            game_status = 0
+        if ball.round_over[1] == 1:
+            player_score += 1
+            game_status = 0
+        print(ball.round_over)
+        pog.update()
+
+        if collision[0]:
+            if collision[1]:
+                for i in range(15):
+                    particles.append(
+                        Particle(
+                            ball.x_pos,
+                            ball.y_pos + ball.radius * 2,
+                            random.randint(0, 40) / 10 - 1,
+                            random.randint(-50, 10) / 10 - 1,
+                            random.randint(4, 6),
+                            0.1,
+                            0.1,
+                            screen,
+                        )
+                    )
+                    pass
+                for i in range(30):
+                    sparks.append(
+                        Spark(
+                            [ball.x_pos, ball.y_pos + ball.radius * 2],
+                            math.radians(random.randint(90, 270)),
+                            random.randint(2, 9),
+                            (255, 255, 255),
+                            2,
+                        )
+                    )
+            else:
+                for i in range(15):
+                    particles.append(
+                        Particle(
+                            ball.x_pos,
+                            ball.y_pos + ball.radius * 2,
+                            random.randint(0, 40) / 10 - 1,
+                            random.randint(-50, 10) / 10 - 1,
+                            random.randint(4, 6),
+                            0.1,
+                            0.1,
+                            screen,
+                        )
+                    )
+                    pass
+                for i in range(30):
+                    sparks.append(
+                        Spark(
+                            [ball.x_pos, ball.y_pos + ball.radius * 2],
+                            math.radians(random.randint(-90, 90)),
+                            random.randint(2, 9),
+                            (255, 255, 255),
+                            2,
+                        )
+                    )
+
+        if game_status == 0:
+            game_status = pog.circle()
+        for particle in particles:
+            particle.update()
+            if particle.radius <= 0:
+                particles.remove(particle)
+
+        for i, spark in sorted(enumerate(sparks), reverse=True):
+            spark.move(1)
+            spark.draw(screen)
+            if not spark.alive:
+                sparks.pop(i)
+
+        fps_counter.render(dt, screen)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
