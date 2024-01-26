@@ -223,21 +223,27 @@ class Ball:
     def check_forces(self, paddles):
 
         # gravity
-        if not pog.toggle:
-            if self.y_pos < SCREEN_HEIGHT - self.radius - (wall_thickness / 2):
-                self.y_speed += gravity
-            else:
-                if self.y_speed > bounce_stop:
-                    self.y_speed = self.y_speed * -1 * self.retention
-                else:
-                    if abs(self.y_speed) <= bounce_stop:
-                        self.y_speed = 0
+        # if not pog.toggle:
+        #     if self.y_pos < SCREEN_HEIGHT - self.radius - (wall_thickness / 2):
+        #         self.y_speed += gravity
+        #     else:
+        #         if self.y_speed > bounce_stop:
+        #             ranNum = random.randrange(-10, 10) / 1000
+        #             self.y_speed = self.y_speed * -1 * (1 - ranNum)
+        #         else:
+        #             if abs(self.y_speed) <= bounce_stop:
+        #                 self.y_speed = 0
 
         # wall bounce
         if (self.x_pos < self.radius + (wall_thickness/2) and self.x_speed < 0):
             self.round_over[0] = 1
         if (self.x_pos > SCREEN_WIDTH - self.radius - (wall_thickness/2) and self.x_speed > 0):
             self.round_over[1] = 1
+        if (self.y_pos < self.radius + (wall_thickness/2) and self.y_speed < 0):
+            self.y_speed *= -1
+        if (self.y_pos > SCREEN_HEIGHT - self.radius - (wall_thickness/2) and self.y_speed > 0):
+            self.y_speed *= -1
+
 
         # paddle bounce
         collision = [False, False]
@@ -251,7 +257,7 @@ class Ball:
                         ):
                             self.rect.right = paddle.rect.left
                             self.x_pos = self.rect.centerx
-                            self.x_speed *= -1
+                            self.x_speed *= -1.1
                             collision[1] = True
 
                         # collision on the left
@@ -261,7 +267,8 @@ class Ball:
                     ):
                         self.rect.left = paddle.rect.right
                         self.x_pos = self.rect.centerx
-                        self.x_speed *= -1
+                        self.x_speed *= -1.1
+                        self.y_speed *= (1 - random.randint(-1000,1000) / 1000)
                     
                 
 
