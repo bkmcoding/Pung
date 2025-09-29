@@ -1,2 +1,4 @@
 # Ignore pycache folder
 __pychache__/
+
+**/*.aseprite
