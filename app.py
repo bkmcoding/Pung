@@ -257,7 +257,7 @@ class Ball:
                         ):
                             self.rect.right = paddle.rect.left
                             self.x_pos = self.rect.centerx
-                            self.x_speed *= -1.1
+                            self.x_speed *= -1.005
                             collision[1] = True
 
                         # collision on the left
@@ -267,7 +267,7 @@ class Ball:
                     ):
                         self.rect.left = paddle.rect.right
                         self.x_pos = self.rect.centerx
-                        self.x_speed *= -1.1
+                        self.x_speed *= -1.005
                         self.y_speed *= (1 - random.randint(-1000,1000) / 1000)
                     
                 
