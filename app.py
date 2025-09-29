@@ -257,7 +257,7 @@ class Ball:
                         ):
                             self.rect.right = paddle.rect.left
                             self.x_pos = self.rect.centerx
-                            self.x_speed *= -1.005
+                            self.x_speed *= -1.01
                             collision[1] = True
 
                         # collision on the left
@@ -267,7 +267,7 @@ class Ball:
                     ):
                         self.rect.left = paddle.rect.right
                         self.x_pos = self.rect.centerx
-                        self.x_speed *= -1.005
+                        self.x_speed *= -1.01
                         self.y_speed *= (1 - random.randint(-1000,1000) / 1000)
                     
                 
@@ -303,8 +303,8 @@ def draw_walls():
 menu = Menu()
 ball = Ball(SCREEN_WIDTH / 2 - 15, 50, 30, 'white', 100, .75, 0, 0, 1, 0.02)
 pog = POG(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 5, True)
-player = Paddle(paddle_height / 4, SCREEN_WIDTH / 2 - paddle_height / 2, 15, paddle_height, 'white')
-enemy = Paddle(SCREEN_WIDTH - paddle_height / 2, SCREEN_HEIGHT / 2 - paddle_height / 2, 15, paddle_height, 'white')
+player = Paddle(paddle_height / 4, SCREEN_WIDTH / 2 - paddle_height / 2, 10, paddle_height, 'white')
+enemy = Paddle(SCREEN_WIDTH - paddle_height / 2, SCREEN_HEIGHT / 2 - paddle_height / 2, 10, paddle_height, 'white')
 fps_counter = FPS()
 particles = []
 sparks = []
@@ -342,7 +342,6 @@ while run:
         if ball.round_over[1] == 1:
             player_score += 1
             game_status = 0
-        print(ball.round_over)
         pog.update()
 
         if collision[0]:
@@ -350,7 +349,7 @@ while run:
                 for i in range(15):
                     particles.append(
                         Particle(
-                            ball.x_pos,
+                            ball.x_pos + ball.radius,
                             ball.y_pos + ball.radius * 2,
                             random.randint(0, 40) / 10 - 1,
                             random.randint(-50, 10) / 10 - 1,
@@ -364,7 +363,7 @@ while run:
                 for i in range(30):
                     sparks.append(
                         Spark(
-                            [ball.x_pos, ball.y_pos + ball.radius * 2],
+                            [ball.x_pos + ball.radius, ball.y_pos + ball.radius * 2],
                             math.radians(random.randint(90, 270)),
                             random.randint(2, 9),
                             (255, 255, 255),
@@ -375,7 +374,7 @@ while run:
                 for i in range(15):
                     particles.append(
                         Particle(
-                            ball.x_pos,
+                            ball.x_pos - ball.radius,
                             ball.y_pos + ball.radius * 2,
                             random.randint(0, 40) / 10 - 1,
                             random.randint(-50, 10) / 10 - 1,
@@ -389,7 +388,7 @@ while run:
                 for i in range(30):
                     sparks.append(
                         Spark(
-                            [ball.x_pos, ball.y_pos + ball.radius * 2],
+                            [ball.x_pos - ball.radius, ball.y_pos + ball.radius * 2],
                             math.radians(random.randint(-90, 90)),
                             random.randint(2, 9),
                             (255, 255, 255),
