@@ -1,6 +1,6 @@
 # Pung 
 
-### An experimental little pong game (W.I.P)
+### A experimental little pong game (W.I.P)
 *~made using python*
 
 <p align="center">
